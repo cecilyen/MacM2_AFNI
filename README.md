@@ -157,28 +157,35 @@ Expected result:
 Packaged artifact:
 
 ```text
-dist/macos_13_ARM.AFNI_25.2.00.m2clang.tgz
+dist/macos_13_ARM.AFNI_25.2.00.m2clang.2.tgz
 ```
 
 Size:
 
 ```text
-359 MB
+416 MB
 ```
 
 SHA-256:
 
 ```text
-3a96ef3ecea2c600487cf833308473fdafd958d695de32ea139d730c4dbc660e
+25a0a3c205e4b1e5897feeb15ce6be584ac1f828b6f7aa6b5c4ec6f14d95ceaa
 ```
 
 Checksum file:
 
 ```text
-dist/macos_13_ARM.AFNI_25.2.00.m2clang.tgz.sha256
+dist/macos_13_ARM.AFNI_25.2.00.m2clang.2.tgz.sha256
 ```
 
-The archive contains a top-level `macos_13_ARM/` directory. It was extracted into `/private/tmp` and re-tested successfully.
+The archive contains a top-level `macos_13_ARM/` directory. It was repacked from `~/abin` after removing Python cache files and adding missing atlas/template/support assets from `~/abin3`. It was extracted into `/private/tmp` and re-tested successfully.
+
+Package contents:
+
+- `2120` files
+- no `__pycache__` files
+- includes atlas/template/refacer support assets, including `MNI152_2009_template_SSW.nii.gz`, `Julich_MNI2009c_v3.1.nii.gz`, and `R_io.so`
+- preserves the `python` symlink
 
 ## Install From The Package
 
@@ -186,7 +193,7 @@ Example user install:
 
 ```zsh
 mkdir -p "$HOME/abin"
-tar -xzf macos_13_ARM.AFNI_25.2.00.m2clang.tgz -C "$HOME/abin" --strip-components=1
+tar -xzf macos_13_ARM.AFNI_25.2.00.m2clang.2.tgz -C "$HOME/abin" --strip-components=1
 echo 'export PATH="$HOME/abin:$PATH"' >> "$HOME/.zshrc"
 echo 'export DYLD_LIBRARY_PATH="/opt/X11/lib/flat_namespace:${DYLD_LIBRARY_PATH}"' >> "$HOME/.zshrc"
 ```
