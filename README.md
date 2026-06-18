@@ -60,15 +60,57 @@ Avoid these flags for this AFNI plugin build:
 
 They can be valid for other projects, but here they hid or stripped symbols needed by AFNI's flat-namespace plugin bundles.
 
-## Requirements
+## Runtime Requirements
 
-Homebrew packages used by this build:
+This package was checked with `otool -L` across `447` Mach-O files in `~/abin`.
+
+Minimal practical Homebrew install set for running this AFNI package:
 
 ```zsh
-brew install libpng jpeg-turbo zlib-ng-compat freetype fontconfig openmotif libomp libxt gsl glib pkgconf autoconf mesa mesa-glu libxpm netpbm cmake
+brew install openmotif mesa-glu gsl glib libomp libxpm zlib-ng-compat
 ```
 
-R is needed for AFNI's R-based programs, but not for the core C/C++ tools to build and run.
+Those top-level formulae provide or pull the runtime libraries used by the binaries. The direct Homebrew dylib formulae found by `otool` were:
+
+```text
+fontconfig
+glib
+gsl
+jpeg-turbo
+libomp
+libpng
+libx11
+libxext
+libxft
+libxmu
+libxp
+libxpm
+libxt
+mesa
+mesa-glu
+openmotif
+zlib-ng-compat
+```
+
+Apple system libraries used at runtime:
+
+```text
+/usr/lib/libSystem.B.dylib
+/usr/lib/libc++.1.dylib
+/usr/lib/libexpat.1.dylib
+/usr/lib/libiconv.2.dylib
+/usr/lib/libz.1.dylib
+```
+
+Not needed just to run this packaged build: `pkgconf`, `autoconf`, `cmake`, and `netpbm`. Those were build-time tools or source-build dependencies, not runtime dylibs in this package.
+
+XQuartz is still needed for interactive AFNI/SUMA GUI display. If plugins fail to load under the GUI, use the XQuartz flat-namespace path:
+
+```zsh
+export DYLD_LIBRARY_PATH="/opt/X11/lib/flat_namespace:${DYLD_LIBRARY_PATH}"
+```
+
+R is needed for AFNI's R-based programs, but not for the core C/C++ AFNI binaries to run.
 
 ## Build
 
