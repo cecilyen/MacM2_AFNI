@@ -10,8 +10,7 @@ the `/opt/homebrew` prefix.
 
 ## TL;DR: Install AFNI
 
-These steps install the current published package, **AFNI 26.2.01**. They also
-preserve an existing `~/abin` directory as a timestamped backup.
+These steps install the updater-compatible **AFNI 26.2.01 revision 2** package.
 
 ### 1. Install the runtime requirements
 
@@ -19,7 +18,9 @@ Install [Homebrew][homebrew] first, then run:
 
 ```zsh
 brew install --cask xquartz
-brew install openmotif mesa-glu gsl glib libomp libxpm zlib-ng-compat
+brew install fontconfig glib gsl jpeg-turbo libomp libpng \
+  libx11 libxext libxft libxmu libxp libxpm libxt \
+  mesa mesa-glu openmotif zlib-ng-compat
 ```
 
 If your organization manages software installations, ask IT to install
@@ -29,22 +30,44 @@ If your organization manages software installations, ask IT to install
 
 ```zsh
 cd "$HOME/Downloads"
-curl -LO https://github.com/cecilyen/MacM2_AFNI/releases/download/v26.2.01-arm64-clang/macos_13_ARM.AFNI_26.2.01.arm64-clang.tgz
-echo "aa9c7392198c6bca70922a769c782f7ec6d4f6861f43bbdd6493e5facf633513  macos_13_ARM.AFNI_26.2.01.arm64-clang.tgz" | shasum -a 256 -c -
+curl -LO https://github.com/cecilyen/MacM2_AFNI/releases/download/v26.2.01-arm64-clang.2/macos_13_ARM.AFNI_26.2.01.arm64-clang.2.tgz
+echo "65c5903b0a418ff76b396f782c50672944023ae23e80f19fd451478e6c6f94a9  macos_13_ARM.AFNI_26.2.01.arm64-clang.2.tgz" | shasum -a 256 -c -
 ```
 
 The checksum command must print `OK`. Stop if it does not.
 
-### 3. Install into `~/abin`
+### 3. Install or update AFNI
+
+If AFNI is already installed in the dedicated `~/abin` directory, use its
+updater:
 
 ```zsh
-if [[ -d "$HOME/abin" ]]; then
-  mv "$HOME/abin" "$HOME/abin.backup.$(date +%Y%m%d-%H%M%S)"
-fi
-mkdir -p "$HOME/abin"
-tar -xzf "$HOME/Downloads/macos_13_ARM.AFNI_26.2.01.arm64-clang.tgz" \
-  -C "$HOME/abin" --strip-components=1
+"$HOME/abin/@update.afni.binaries" \
+  -local_package "$HOME/Downloads/macos_13_ARM.AFNI_26.2.01.arm64-clang.2.tgz" \
+  -bindir "$HOME/abin" \
+  -make_backup yes \
+  -sys_ok \
+  -no_recur
+```
 
+`-sys_ok` is needed when upgrading the older package because it included a
+`python` symlink. Use this command only when `~/abin` is dedicated to AFNI.
+The updater preserves the previous files in an `auto_backup.*` directory.
+
+For a first installation, extract the archive directly:
+
+```zsh
+mkdir -p "$HOME/abin"
+tar -xzf "$HOME/Downloads/macos_13_ARM.AFNI_26.2.01.arm64-clang.2.tgz" \
+  -C "$HOME/abin" --strip-components=1
+```
+
+The AFNI updater uses `-package` for package names hosted on the AFNI server.
+Use `-local_package` for this downloaded GitHub archive.
+
+Add AFNI to the shell path after either method:
+
+```zsh
 touch "$HOME/.zshrc"
 grep -qxF 'export PATH="$HOME/abin:$PATH"' "$HOME/.zshrc" || \
   echo 'export PATH="$HOME/abin:$PATH"' >> "$HOME/.zshrc"
@@ -68,22 +91,31 @@ DYLD_LIBRARY_PATH=/opt/X11/lib/flat_namespace afni
 
 ## Package Contents
 
-The published `v26.2.01-arm64-clang` archive contains:
+The published `v26.2.01-arm64-clang.2` archive contains:
 
 - AFNI 26.2.01 arm64 programs and GUI plugins
 - SUMA programs
 - AFNI atlases, templates, refacer data, and support files
+- 2,126 regular files under a single updater-compatible top-level directory
 - no Python cache files
 
-Download it from the [GitHub release page][release-26]. The previous
-[AFNI 25.2.00 package][release-25] remains available.
+Download it from the [revision 2 release page][release-26-2]. Earlier packages
+remain available from the [releases page][releases].
 
 ## Runtime Requirements
 
-The package links to Homebrew libraries supplied by the formulae in the TL;DR,
-including OpenMotif, Mesa/GLU, GSL, GLib, OpenMP, X11 libraries, libpng,
-`jpeg-turbo`, and `zlib-ng-compat`. It uses the macOS system copies of Expat
-and `libiconv`.
+The binaries directly link to these Homebrew formulae, all listed explicitly
+in the TL;DR installation command:
+
+```text
+fontconfig  glib       gsl       jpeg-turbo  libomp   libpng
+libx11      libxext    libxft    libxmu      libxp    libxpm
+libxt       mesa       mesa-glu  openmotif   zlib-ng-compat
+```
+
+Homebrew may install additional transitive dependencies. The package uses the
+macOS system copies of Expat and `libiconv`. Build-only tools such as
+`autoconf`, `netpbm`, and `pkgconf` are not required at runtime.
 
 XQuartz is required for the AFNI and SUMA graphical interfaces. R and optional
 Python modules are needed only by AFNI programs that specifically use them.
@@ -120,7 +152,21 @@ Python cache files: 0
 ```
 
 The older `R_io.so` is not included because it was built against a different
-AFNI/R library set. Core AFNI and SUMA programs do not require it.
+AFNI/R library set and requires an R 4.3 framework not present on the test
+system. Core AFNI and SUMA programs do not require it.
+
+## Official Package Comparison
+
+The archive layout and payload were compared with AFNI's official
+[`macos_13_ARM.AFNI_25.3.03.tgz`][official-25]. Common paths had zero file-type
+or permission-mode mismatches. The missing portable support file
+`funstuff/face_lincoln1.jpg` was added. The only remaining official-only path
+is the incompatible `R_io.so` described above.
+
+The revision-2 archive was installed successfully with
+`@update.afni.binaries -local_package`, including backup mode and an upgrade
+from the older package's `python` symlink. All 2,126 installed files matched
+the package manifest.
 
 ## Build Choices
 
@@ -140,7 +186,8 @@ questions through the official [AFNI support channels][afni-support].
 [afni-support]: https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/discussion/user_forums.html
 [homebrew]: https://brew.sh/
 [xquartz]: https://www.xquartz.org/
-[release-26]: https://github.com/cecilyen/MacM2_AFNI/releases/tag/v26.2.01-arm64-clang
-[release-25]: https://github.com/cecilyen/MacM2_AFNI/releases/tag/v25.2.00-m2clang.2
+[release-26-2]: https://github.com/cecilyen/MacM2_AFNI/releases/tag/v26.2.01-arm64-clang.2
+[releases]: https://github.com/cecilyen/MacM2_AFNI/releases
+[official-25]: https://afni.nimh.nih.gov/pub/dist/tgz/macos_13_ARM.AFNI_25.3.03.tgz
 [zlib-ng]: https://github.com/zlib-ng/zlib-ng
 [jpeg-turbo]: https://github.com/libjpeg-turbo/libjpeg-turbo
