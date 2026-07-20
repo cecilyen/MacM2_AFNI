@@ -97,6 +97,7 @@ The published `v26.2.01-arm64-clang.2` archive contains:
 - SUMA programs
 - AFNI atlases, templates, refacer data, and support files
 - 2,126 regular files under a single updater-compatible top-level directory
+- no `R_io.so` from the older official package
 - no Python cache files
 
 Download it from the [revision 2 release page][release-26-2]. Earlier packages
@@ -159,9 +160,30 @@ system. Core AFNI and SUMA programs do not require it.
 
 The archive layout and payload were compared with AFNI's official
 [`macos_13_ARM.AFNI_25.3.03.tgz`][official-25]. Common paths had zero file-type
-or permission-mode mismatches. The missing portable support file
-`funstuff/face_lincoln1.jpg` was added. The only remaining official-only path
-is the incompatible `R_io.so` described above.
+or permission-mode mismatches.
+
+File differences after merging portable support data:
+
+- Added from the official package: `funstuff/face_lincoln1.jpg`
+- Official-only and excluded: `R_io.so`
+- Present only in this AFNI 26.2.01 package:
+
+```text
+3dSpaceTimeCorr2
+adjunct_refacer_make_master_addendum2
+afni_refacer2
+afnipy/lib_cluster_rois.py
+afnipy/lib_cluster_table.py
+afnipy/lib_info_items.py
+afnipy/lib_torch_util.py
+funstuff/face_darwin.jpg
+funstuff/face_x2zhang.jpg
+gen_cluster_table.py
+install_bootcamp_data.tcsh
+```
+
+`R_io.so` remains excluded because the official file is an older compiled
+module with the incompatible R and library dependencies described above.
 
 The revision-2 archive was installed successfully with
 `@update.afni.binaries -local_package`, including backup mode and an upgrade
