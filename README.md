@@ -65,28 +65,12 @@ tar -xzf "$HOME/Downloads/macos_13_ARM.AFNI_26.2.01.arm64-clang.2.tgz" \
 The AFNI updater uses `-package` for package names hosted on the AFNI server.
 Use `-local_package` for this downloaded GitHub archive.
 
-Add AFNI to the shell path after either method:
-
-```zsh
-touch "$HOME/.zshrc"
-grep -qxF 'export PATH="$HOME/abin:$PATH"' "$HOME/.zshrc" || \
-  echo 'export PATH="$HOME/abin:$PATH"' >> "$HOME/.zshrc"
-source "$HOME/.zshrc"
-```
-
 ### 4. Check and launch AFNI
 
 ```zsh
-afni -ver
-afni_system_check.py -check_all
-afni
-```
-
-If the AFNI window or plugins fail to open, launch it with the XQuartz
-flat-namespace libraries:
-
-```zsh
-DYLD_LIBRARY_PATH=/opt/X11/lib/flat_namespace afni
+"$HOME/abin/afni" -ver
+"$HOME/abin/afni_system_check.py" -check_all
+"$HOME/abin/afni"
 ```
 
 ## Package Contents
