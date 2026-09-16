@@ -135,6 +135,7 @@ Build profile:
 Compiler: Apple clang 21.0.0
 CFLAGS/CXXFLAGS: -O3 -arch arm64 -flto=thin -pipe
 LDFLAGS: -arch arm64 -flto=thin -Wl,-dead_strip
+OpenMP: Homebrew libomp with -Xpreprocessor -fopenmp -DUSE_OMP
 zlib: Homebrew zlib-ng-compat
 JPEG: Homebrew jpeg-turbo
 Expat/iconv: macOS system libraries
@@ -155,6 +156,49 @@ Python cache files: 0
 The older `R_io.so` is not included because it was built against a different
 AFNI/R library set and requires an R 4.3 framework not present on the test
 system. Core AFNI and SUMA programs do not require it.
+
+## OpenMP on Apple Silicon
+
+AFNI's [top-level source README][afni-source-readme] says that Apple's C
+compiler does not support OpenMP and recommends GCC or Intel `icc`. The first
+part remains partly true for the default toolchain, but the compiler
+recommendations are outdated.
+
+Apple Clang 21 on the build system rejects a plain `-fopenmp` option and does
+not include an OpenMP runtime. However, its Clang frontend can compile AFNI's
+CPU OpenMP code when explicitly connected to Homebrew's LLVM `libomp` runtime.
+This package was built with Apple Clang and these OpenMP options:
+
+```text
+-Xpreprocessor -fopenmp
+-I/opt/homebrew/opt/libomp/include
+-L/opt/homebrew/opt/libomp/lib -lomp
+-DUSE_OMP
+```
+
+[LLVM Clang supports OpenMP][llvm-openmp], and Homebrew provides both
+[LLVM Clang][homebrew-llvm] and an Apple Silicon [libomp][homebrew-libomp]
+package. Homebrew LLVM Clang can use the normal `-fopenmp` option, so GCC is
+not required. Intel `icc` is not a current Apple Silicon alternative: Intel
+ended oneAPI toolkit support for macOS starting with the 2024.0 release.
+[Intel's macOS notice][intel-macos] documents that change.
+
+OpenMP validation for this release found:
+
+- `afni_check_omp` reported 12 available threads on the M2 Max build system.
+- 35 installed Mach-O programs linked to Homebrew `libomp`.
+- AFNI 26.2.01 contained 510 OpenMP pragmas across 61 C source/header files.
+
+Parallel regions occur in programs such as `3dQwarp`, `3dAllineate`,
+`3dClustSim`, `3dREMLfit`, `3dTproject`, and `3dDespike`. OpenMP improves only
+the parallel portions of a workload; small inputs, serial phases, memory
+bandwidth, and thread startup can limit or eliminate the speed gain. AFNI's
+[OpenMP notes][afni-openmp] describe this behavior and the
+`OMP_NUM_THREADS` environment variable.
+
+Because the published binaries link `/opt/homebrew/opt/libomp/lib/libomp.dylib`,
+`libomp` is a runtime requirement and is already included in the TL;DR install
+command.
 
 ## Official Package Comparison
 
@@ -194,7 +238,8 @@ the package manifest.
 
 - [`zlib-ng-compat`][zlib-ng] provides the zlib-compatible API used by AFNI.
 - [`jpeg-turbo`][jpeg-turbo] provides the libjpeg-compatible API used by AFNI.
-- Apple Clang avoids a GCC runtime dependency.
+- Apple Clang with LLVM `libomp` retains OpenMP without a GCC runtime
+  dependency.
 - The build targets generic Apple `arm64`; it does not use M2-only CPU flags.
 
 ## License and Support
@@ -213,3 +258,9 @@ questions through the official [AFNI support channels][afni-support].
 [official-25]: https://afni.nimh.nih.gov/pub/dist/tgz/macos_13_ARM.AFNI_25.3.03.tgz
 [zlib-ng]: https://github.com/zlib-ng/zlib-ng
 [jpeg-turbo]: https://github.com/libjpeg-turbo/libjpeg-turbo
+[afni-source-readme]: https://github.com/afni/afni#compilation-of-afni
+[afni-openmp]: https://afni.nimh.nih.gov/pub/dist/doc/misc/OpenMP.html
+[llvm-openmp]: https://clang.llvm.org/docs/OpenMPSupport.html
+[homebrew-llvm]: https://formulae.brew.sh/formula/llvm
+[homebrew-libomp]: https://formulae.brew.sh/formula/libomp.html
+[intel-macos]: https://www.intel.com/content/www/us/en/docs/oneapi/installation-guide-macos/2024-0/overview.html
